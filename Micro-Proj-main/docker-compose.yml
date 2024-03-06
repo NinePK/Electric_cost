@@ -1,0 +1,51 @@
+version: '3.9'
+services:
+  fastapi:
+    image: my-fastapi
+    build: 
+      context: .
+      dockerfile: Dockerfile.app
+    ports:
+      - 8000:8000
+    environment:
+      MONGODB_URL: "mongodb://root:example@mongo:27017"
+    depends_on:
+      - mongo
+  mongo:
+    image: "mongo:latest"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    ports:
+      - 27017:27017
+  mqtt-client:
+    image: my-mqtt
+    build: 
+      context: .
+      dockerfile: Dockerfile.mqtt
+    depends_on:
+      - mongo
+  mongo-express:
+    image: mongo-express
+    environment:
+        - ME_CONFIG_MONGODB_SERVER=mongo
+        - ME_CONFIG_MONGODB_PORT=27017
+        - ME_CONFIG_MONGODB_AUTH_USERNAME=root
+        - ME_CONFIG_MONGODB_AUTH_PASSWORD=example
+        - ME_CONFIG_BASICAUTH_USERNAME=admin
+        - ME_CONFIG_BASICAUTH_PASSWORD=example
+    depends_on:
+        - mongo
+    ports:
+      - "8888:8081"
+  streamlit:
+    image: streamlit
+    build: 
+      context: .
+      dockerfile: Dockerfile.streamlit
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    depends_on:
+      - mongo
